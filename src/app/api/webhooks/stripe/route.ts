@@ -32,7 +32,11 @@ export async function POST(req: Request) {
 
   try {
     if (event.type === "checkout.session.completed") {
-      await ensurePolicyFromSession(event.data.object);
+      const host = (await headers()).get("host") ?? "localhost:3000";
+      const proto =
+        (await headers()).get("x-forwarded-proto") ?? "http";
+      const appOrigin = `${proto}://${host}`;
+      await ensurePolicyFromSession(event.data.object, { appOrigin });
     }
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);

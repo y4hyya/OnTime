@@ -1,11 +1,17 @@
 import { eq } from "drizzle-orm";
 import type Stripe from "stripe";
 import { db } from "@/lib/db/client";
-import { policies, quotes } from "@/lib/db/schema";
+import { flights, policies, quotes } from "@/lib/db/schema";
+import { sendPolicyCreatedEmail } from "@/lib/email/resend";
 
 export type EnsurePolicyResult = {
   policyId: string;
   created: boolean;
+};
+
+export type EnsurePolicyOptions = {
+  /** Absolute origin (e.g. https://ontime.app) used to build the email's policy link. */
+  appOrigin?: string;
 };
 
 /**
@@ -15,6 +21,7 @@ export type EnsurePolicyResult = {
  */
 export async function ensurePolicyFromSession(
   session: Stripe.Checkout.Session,
+  options: EnsurePolicyOptions = {},
 ): Promise<EnsurePolicyResult> {
   if (session.payment_status !== "paid") {
     throw new Error(
@@ -69,5 +76,58 @@ export async function ensurePolicyFromSession(
     .set({ acceptedAt: new Date() })
     .where(eq(quotes.id, quoteId));
 
+  await notifyPolicyCreated({
+    policyId: policyRow.id,
+    flightId,
+    premiumCents,
+    session,
+    appOrigin: options.appOrigin,
+  });
+
   return { policyId: policyRow.id, created: true };
+}
+
+async function notifyPolicyCreated(input: {
+  policyId: string;
+  flightId: string;
+  premiumCents: number;
+  session: Stripe.Checkout.Session;
+  appOrigin?: string;
+}): Promise<void> {
+  try {
+    const recipient = input.session.customer_details?.email;
+    if (!recipient) {
+      console.warn(
+        "Stripe session has no customer_details.email; skipping policy email.",
+      );
+      return;
+    }
+
+    const [flight] = await db
+      .select()
+      .from(flights)
+      .where(eq(flights.id, input.flightId))
+      .limit(1);
+    if (!flight) {
+      console.warn(`Flight ${input.flightId} not found; skipping policy email.`);
+      return;
+    }
+
+    const origin =
+      input.appOrigin ??
+      process.env.NEXT_PUBLIC_APP_URL ??
+      "http://localhost:3000";
+
+    await sendPolicyCreatedEmail({
+      to: recipient,
+      iata: flight.iata ?? flight.flightNumber,
+      origin: flight.origin,
+      destination: flight.destination,
+      scheduledDepAt: flight.scheduledDepAt,
+      premiumCents: input.premiumCents,
+      policyUrl: `${origin}/policies/${input.policyId}`,
+    });
+  } catch (e) {
+    console.error("Policy-created email failed:", e);
+  }
 }

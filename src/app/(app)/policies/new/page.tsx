@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { CheckCircle2 } from "lucide-react";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { Button } from "@/components/ui/button";
@@ -43,7 +44,11 @@ export default async function PolicyCreatedPage({
     );
   }
 
-  const { policyId } = await ensurePolicyFromSession(session);
+  const h = await headers();
+  const host = h.get("host") ?? "localhost:3000";
+  const proto = h.get("x-forwarded-proto") ?? "http";
+  const appOrigin = `${proto}://${host}`;
+  const { policyId } = await ensurePolicyFromSession(session, { appOrigin });
 
   const [policy] = await db
     .select()
