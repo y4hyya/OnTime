@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { Button } from "@/components/ui/button";
+import { CheckNowButton } from "@/components/policy/CheckNowButton";
 import { db } from "@/lib/db/client";
 import { flights, policies } from "@/lib/db/schema";
 import { TIER_MULTIPLIERS, tierLabel } from "@/lib/ai/tiers";
@@ -89,6 +90,8 @@ export default async function PolicyDetailPage({
           </div>
         </div>
       </div>
+
+      <CheckNowButton policyId={policy.id} />
 
       <Button nativeButton={false} render={<Link href="/policies" />}>
         All policies

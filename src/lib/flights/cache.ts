@@ -101,6 +101,11 @@ export type FlightCacheResult = {
   source: "cache" | "api";
 };
 
+export type GetFlightOptions = {
+  /** Bypass the TTL check and always re-fetch from the API. Used by the monitor cron. */
+  forceRefresh?: boolean;
+};
+
 /**
  * Read-through cache. Returns a fresh row from the DB if available, otherwise
  * fetches from AeroDataBox, persists, and returns the new data.
@@ -108,10 +113,11 @@ export type FlightCacheResult = {
 export async function getFlight(
   iata: string,
   date: string,
+  options: GetFlightOptions = {},
 ): Promise<FlightCacheResult | null> {
   const normalized = normalizeIata(iata);
   const existing = await findRow(normalized, date);
-  if (existing && isFresh(existing)) {
+  if (existing && isFresh(existing) && !options.forceRefresh) {
     return { id: existing.id, data: rowToLookup(existing), source: "cache" };
   }
   const fresh = await lookupFlightByNumber(normalized, date);

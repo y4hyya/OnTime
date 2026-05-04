@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/monitor-flights",
+      "schedule": "*/15 * * * *"
+    }
+  ]
+}
