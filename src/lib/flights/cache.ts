@@ -59,7 +59,7 @@ async function findRow(
 async function upsert(
   existing: FlightRow | null,
   lookup: FlightLookup,
-): Promise<void> {
+): Promise<string> {
   const now = new Date();
   if (existing) {
     await db
@@ -75,23 +75,28 @@ async function upsert(
         lastCheckedAt: now,
       })
       .where(eq(flights.id, existing.id));
-    return;
+    return existing.id;
   }
-  await db.insert(flights).values({
-    iata: lookup.iata,
-    flightNumber: lookup.flightNumber,
-    origin: lookup.origin,
-    destination: lookup.destination,
-    scheduledDepAt: lookup.scheduledDepAt,
-    scheduledArrAt: lookup.scheduledArrAt,
-    actualDepAt: lookup.actualDepAt,
-    actualArrAt: lookup.actualArrAt,
-    status: lookup.status,
-    lastCheckedAt: now,
-  });
+  const inserted = await db
+    .insert(flights)
+    .values({
+      iata: lookup.iata,
+      flightNumber: lookup.flightNumber,
+      origin: lookup.origin,
+      destination: lookup.destination,
+      scheduledDepAt: lookup.scheduledDepAt,
+      scheduledArrAt: lookup.scheduledArrAt,
+      actualDepAt: lookup.actualDepAt,
+      actualArrAt: lookup.actualArrAt,
+      status: lookup.status,
+      lastCheckedAt: now,
+    })
+    .returning({ id: flights.id });
+  return inserted[0].id;
 }
 
 export type FlightCacheResult = {
+  id: string;
   data: FlightLookup;
   source: "cache" | "api";
 };
@@ -107,10 +112,10 @@ export async function getFlight(
   const normalized = normalizeIata(iata);
   const existing = await findRow(normalized, date);
   if (existing && isFresh(existing)) {
-    return { data: rowToLookup(existing), source: "cache" };
+    return { id: existing.id, data: rowToLookup(existing), source: "cache" };
   }
   const fresh = await lookupFlightByNumber(normalized, date);
   if (!fresh) return null;
-  await upsert(existing, fresh);
-  return { data: fresh, source: "api" };
+  const id = await upsert(existing, fresh);
+  return { id, data: fresh, source: "api" };
 }
