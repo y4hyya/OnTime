@@ -33,6 +33,12 @@ export default function MarketingLayout({
         </div>
       </header>
       <main className="flex-1">{children}</main>
+      <footer className="border-t">
+        <div className="mx-auto max-w-5xl px-6 py-6 text-center text-xs text-muted-foreground">
+          OnTime · simulated MVP, not yet a licensed insurance product · T-2h
+          purchase cutoff applies
+        </div>
+      </footer>
     </div>
   );
 }
