@@ -66,5 +66,8 @@ function labelForTool(name: string, input: unknown): string {
   if (name === "run_pricing") {
     return "Calculating premium";
   }
+  if (name === "get_policy") {
+    return "Looking up your policy";
+  }
   return `Calling ${name}`;
 }
