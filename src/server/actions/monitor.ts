@@ -6,10 +6,12 @@ import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db/client";
 import { flights, policies } from "@/lib/db/schema";
 import { getFlight } from "@/lib/flights/cache";
+import { evaluatePolicyTriggersForFlight } from "@/server/monitor";
 
 export type RefreshResult = {
   source: "cache" | "api";
   status: string;
+  triggered: number;
 };
 
 /**
@@ -43,10 +45,13 @@ export async function refreshPolicyFlight(
   const result = await getFlight(iata, date, { forceRefresh: true });
   if (!result) throw new Error("Flight no longer available from data source");
 
+  const trig = await evaluatePolicyTriggersForFlight(policy.flightId);
+
   revalidatePath(`/policies/${policyId}`);
 
   return {
     source: result.source,
     status: result.data.status,
+    triggered: trig.triggered,
   };
 }
