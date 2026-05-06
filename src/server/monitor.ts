@@ -1,7 +1,9 @@
 import { and, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import { clerkClient } from "@clerk/nextjs/server";
 import { db } from "@/lib/db/client";
 import { events, flights, policies } from "@/lib/db/schema";
-import { computeTriggeredTier } from "@/lib/ai/tiers";
+import { computeTriggeredTier, TIER_MULTIPLIERS } from "@/lib/ai/tiers";
+import { sendPolicyClaimableEmail } from "@/lib/email/resend";
 import { getFlight } from "@/lib/flights/cache";
 
 const T_MINUS_24H_MS = 24 * 60 * 60 * 1000;
@@ -122,7 +124,12 @@ export async function evaluatePolicyTriggersForFlight(
   }
 
   const affected = await db
-    .select({ id: policies.id, status: policies.status })
+    .select({
+      id: policies.id,
+      status: policies.status,
+      userClerkId: policies.userClerkId,
+      premiumCents: policies.premiumCents,
+    })
     .from(policies)
     .where(
       and(
@@ -152,11 +159,21 @@ export async function evaluatePolicyTriggersForFlight(
       payloadJson: payload,
     });
 
-    if (policy.status === "active") {
+    const becameClaimable = policy.status === "active";
+    if (becameClaimable) {
       await db
         .update(policies)
         .set({ status: "claimable" })
         .where(eq(policies.id, policy.id));
+
+      await notifyPolicyClaimable({
+        policyId: policy.id,
+        userClerkId: policy.userClerkId,
+        premiumCents: policy.premiumCents,
+        flight,
+        tierIndex: tier.tierIndex,
+        delayMinutes: tier.delayMinutes,
+      });
     }
 
     triggered++;
@@ -167,6 +184,54 @@ export async function evaluatePolicyTriggersForFlight(
     policiesEvaluated: affected.length,
     triggered,
   };
+}
+
+async function notifyPolicyClaimable(input: {
+  policyId: string;
+  userClerkId: string;
+  premiumCents: number;
+  flight: typeof flights.$inferSelect;
+  tierIndex: number;
+  delayMinutes: number | null;
+}): Promise<void> {
+  try {
+    const tier = TIER_MULTIPLIERS[input.tierIndex];
+    if (!tier) {
+      console.warn(
+        `notifyPolicyClaimable: unknown tier index ${input.tierIndex}; skipping email.`,
+      );
+      return;
+    }
+
+    const client = await clerkClient();
+    const user = await client.users.getUser(input.userClerkId);
+    const recipient = user.emailAddresses.find(
+      (e) => e.id === user.primaryEmailAddressId,
+    )?.emailAddress;
+    if (!recipient) {
+      console.warn(
+        `notifyPolicyClaimable: no primary email for user ${input.userClerkId}; skipping.`,
+      );
+      return;
+    }
+
+    const origin =
+      process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
+    await sendPolicyClaimableEmail({
+      to: recipient,
+      iata: input.flight.iata ?? input.flight.flightNumber,
+      origin: input.flight.origin,
+      destination: input.flight.destination,
+      scheduledDepAt: input.flight.scheduledDepAt,
+      tierIndex: input.tierIndex,
+      delayMinutes: input.delayMinutes,
+      payoutCents: input.premiumCents * tier.multiplier,
+      policyUrl: `${origin}/policies/${input.policyId}`,
+    });
+  } catch (e) {
+    console.error("Policy-claimable email failed:", e);
+  }
 }
 
 async function maxPriorTierIndex(policyId: string): Promise<number> {
