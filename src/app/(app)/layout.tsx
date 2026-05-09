@@ -1,5 +1,6 @@
 import { UserButton } from "@clerk/nextjs";
 import { Sidebar } from "@/components/app/Sidebar";
+import { SupportWidget } from "@/components/app/SupportWidget";
 
 export default function AppLayout({
   children,
@@ -17,6 +18,7 @@ export default function AppLayout({
           {children}
         </main>
       </div>
+      <SupportWidget />
     </div>
   );
 }

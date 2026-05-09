@@ -13,3 +13,4 @@ export function getGoogleAI(): GoogleGenAI {
 }
 
 export const QUOTE_AGENT_MODEL = "gemini-2.5-flash" as const;
+export const SUPPORT_AGENT_MODEL = "gemini-2.5-flash-lite" as const;
