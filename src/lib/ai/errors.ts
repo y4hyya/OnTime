@@ -31,9 +31,6 @@ export function friendlyAgentError(e: unknown): string {
   if (raw.includes("GEMINI_API_KEY is not set")) {
     return "AI service is not configured (missing API key).";
   }
-  if (raw.includes("ANTHROPIC_API_KEY is not set")) {
-    return "AI service is not configured (missing API key).";
-  }
   if (raw.toLowerCase().includes("timeout")) {
     return "Request timed out. Please try again.";
   }
