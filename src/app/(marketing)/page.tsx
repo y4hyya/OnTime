@@ -52,12 +52,12 @@ export default function Home() {
             Why this exists
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Vienna airport, mid-afternoon, two hours of delay. Sitting in one of
-            those uncomfortable plastic chairs, I realized I&apos;d gladly have
-            paid a couple of dollars to insure even thirty minutes of this — to
-            be in the Starbucks across the gate with a coffee instead. Existing
-            flight insurance only kicks in past three hours or on cancellations.
-            Nobody covers the ordinary Wednesday-afternoon delay. So we did.
+            Vienna airport, mid-afternoon, two hours into a delay. I was in one
+            of those plastic chairs and realized I&apos;d have gladly paid a
+            couple of dollars to insure even thirty minutes of this — to be in
+            the Starbucks across the gate instead. Existing flight insurance
+            only kicks in past three hours or on cancellations; nobody covers
+            the ordinary Wednesday-afternoon delay. So we did.
           </p>
         </div>
       </section>
@@ -119,7 +119,62 @@ export default function Home() {
           </ol>
         </div>
       </section>
+
+      <section className="border-b">
+        <div className="mx-auto max-w-2xl px-6 py-16">
+          <h2 className="mb-10 text-center text-3xl font-semibold tracking-tight">
+            Common questions
+          </h2>
+          <div className="space-y-4">
+            <Faq question="How do you not go broke on a $40 payout for a $2 premium?">
+              The AI prices each premium based on the flight&apos;s actual
+              delay risk — route, airline, day, time, season. Across thousands
+              of policies the math averages out. We&apos;re upfront that real
+              underwriting calibration is post-MVP work, but the infrastructure
+              to price per-flight risk is there from day one.
+            </Faq>
+            <Faq question="What if my flight isn't covered?">
+              We cover most commercial passenger flights. If the AI can&apos;t
+              find your flight in the data source — small regional carriers,
+              charter ops — it&apos;ll tell you and refuse to quote rather than
+              guess. We&apos;d rather not insure than mis-insure.
+            </Faq>
+            <Faq question="When do I get paid?">
+              The moment your flight crosses a delay tier, your policy flips to
+              claimable and the payout is waiting on a one-click confirm. In
+              this demo build it&apos;s instant; in production it would settle
+              to your card via Stripe within minutes.
+            </Faq>
+            <Faq question="Why a 2-hour purchase cutoff?">
+              Adverse selection. Once the airport board shows your flight
+              delayed, anyone could buy a policy and immediately claim. The
+              T-2h cutoff means coverage must be bought before delay info is
+              publicly visible — keeping the math fair for everyone.
+            </Faq>
+          </div>
+        </div>
+      </section>
     </>
+  );
+}
+
+function Faq({
+  question,
+  children,
+}: {
+  question: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <details className="group rounded-lg border bg-background p-4 open:bg-muted/20">
+      <summary className="cursor-pointer select-none text-sm font-medium [&::-webkit-details-marker]:hidden">
+        <span className="inline-block w-4 text-muted-foreground transition-transform group-open:rotate-90">
+          ›
+        </span>{" "}
+        {question}
+      </summary>
+      <div className="mt-3 pl-5 text-sm text-muted-foreground">{children}</div>
+    </details>
   );
 }
 
