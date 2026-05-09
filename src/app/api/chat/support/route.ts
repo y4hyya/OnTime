@@ -1,5 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
-import type { Content } from "@google/genai";
+import type {
+  Content,
+  GenerateContentResponseUsageMetadata,
+} from "@google/genai";
 import { getGoogleAI, SUPPORT_AGENT_MODEL } from "@/lib/ai/client";
 import { SUPPORT_AGENT_SYSTEM_PROMPT } from "@/lib/ai/prompts/support-agent";
 import { db } from "@/lib/db/client";
@@ -54,11 +57,13 @@ export async function POST(req: Request) {
         });
 
         let bufferedText = "";
+        let lastUsage: GenerateContentResponseUsageMetadata | undefined;
         for await (const chunk of apiStream) {
           if (chunk.text) {
             bufferedText += chunk.text;
             send({ type: "text-delta", text: chunk.text });
           }
+          if (chunk.usageMetadata) lastUsage = chunk.usageMetadata;
         }
 
         if (bufferedText.length > 0) {
@@ -73,6 +78,17 @@ export async function POST(req: Request) {
           agentType: "support",
           messagesJson: conversation,
         });
+
+        const promptTokens = lastUsage?.promptTokenCount ?? 0;
+        const outputTokens = lastUsage?.candidatesTokenCount ?? 0;
+        const cachedTokens = lastUsage?.cachedContentTokenCount ?? 0;
+        console.log(
+          `[ai] agent=support prompt=${promptTokens} cached=${cachedTokens} output=${outputTokens} total=${promptTokens + outputTokens} hit_rate=${
+            promptTokens > 0
+              ? ((cachedTokens / promptTokens) * 100).toFixed(1)
+              : "0.0"
+          }%`,
+        );
 
         send({ type: "done" });
       } catch (e) {

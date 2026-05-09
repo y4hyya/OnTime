@@ -1,5 +1,11 @@
 import { auth } from "@clerk/nextjs/server";
-import type { Content, FunctionCall, FunctionDeclaration, Part } from "@google/genai";
+import type {
+  Content,
+  FunctionCall,
+  FunctionDeclaration,
+  GenerateContentResponseUsageMetadata,
+  Part,
+} from "@google/genai";
 import { getGoogleAI, QUOTE_AGENT_MODEL } from "@/lib/ai/client";
 import { QUOTE_AGENT_SYSTEM_PROMPT } from "@/lib/ai/prompts/quote-agent";
 import {
@@ -66,6 +72,10 @@ export async function POST(req: Request) {
         const ai = getGoogleAI();
         const systemInstruction = `${QUOTE_AGENT_SYSTEM_PROMPT}\n\nCurrent UTC date/time: ${new Date().toISOString()}`;
 
+        let totalPromptTokens = 0;
+        let totalOutputTokens = 0;
+        let totalCachedTokens = 0;
+
         let turn = 0;
         while (turn++ < MAX_TURNS) {
           const apiStream = await ai.models.generateContentStream({
@@ -80,6 +90,7 @@ export async function POST(req: Request) {
 
           let bufferedText = "";
           const toolCalls: FunctionCall[] = [];
+          let lastUsage: GenerateContentResponseUsageMetadata | undefined;
 
           for await (const chunk of apiStream) {
             if (chunk.text) {
@@ -89,6 +100,13 @@ export async function POST(req: Request) {
             if (chunk.functionCalls) {
               for (const fc of chunk.functionCalls) toolCalls.push(fc);
             }
+            if (chunk.usageMetadata) lastUsage = chunk.usageMetadata;
+          }
+
+          if (lastUsage) {
+            totalPromptTokens += lastUsage.promptTokenCount ?? 0;
+            totalOutputTokens += lastUsage.candidatesTokenCount ?? 0;
+            totalCachedTokens += lastUsage.cachedContentTokenCount ?? 0;
           }
 
           const modelParts: Part[] = [];
@@ -148,6 +166,14 @@ export async function POST(req: Request) {
           agentType: "quote",
           messagesJson: conversation,
         });
+
+        console.log(
+          `[ai] agent=quote prompt=${totalPromptTokens} cached=${totalCachedTokens} output=${totalOutputTokens} total=${totalPromptTokens + totalOutputTokens} hit_rate=${
+            totalPromptTokens > 0
+              ? ((totalCachedTokens / totalPromptTokens) * 100).toFixed(1)
+              : "0.0"
+          }%`,
+        );
 
         send({ type: "done" });
       } catch (e) {
