@@ -16,7 +16,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex w-60 shrink-0 flex-col border-r">
+    <aside className="hidden w-60 shrink-0 flex-col border-r md:flex">
       <div className="flex h-14 items-center border-b px-6">
         <Link href="/" className="text-lg font-semibold tracking-tight">
           OnTime

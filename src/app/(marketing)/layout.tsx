@@ -8,7 +8,7 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-dvh flex-col">
       <header className="flex h-14 items-center justify-between border-b px-6">
         <Link href="/" className="text-lg font-semibold tracking-tight">
           OnTime
