@@ -10,7 +10,18 @@ export type ChatMessage =
   | { role: "user"; content: string }
   | AssistantMessage;
 
-export function MessageList({ messages }: { messages: ChatMessage[] }) {
+const EXAMPLES = [
+  "Insure my TK1 tomorrow",
+  "What would BA117 cost on Friday?",
+] as const;
+
+export function MessageList({
+  messages,
+  onPickExample,
+}: {
+  messages: ChatMessage[];
+  onPickExample?: (text: string) => void;
+}) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -25,7 +36,7 @@ export function MessageList({ messages }: { messages: ChatMessage[] }) {
       className="min-h-0 flex-1 space-y-4 overflow-y-auto p-6"
     >
       {messages.length === 0 ? (
-        <EmptyState />
+        <EmptyState onPick={onPickExample} />
       ) : (
         messages.map((m, i) =>
           m.role === "user" ? (
@@ -49,21 +60,32 @@ function UserBubble({ content }: { content: string }) {
   );
 }
 
-function EmptyState() {
+function EmptyState({ onPick }: { onPick?: (text: string) => void }) {
   return (
     <div className="flex h-full items-center justify-center">
-      <div className="max-w-md space-y-3 text-center text-sm text-muted-foreground">
-        <p>Tell us a flight you'd like to insure.</p>
-        <p className="text-xs">
-          Try{" "}
-          <span className="rounded bg-muted px-1.5 py-0.5 font-mono">
-            Insure my TK1 tomorrow
-          </span>{" "}
-          or{" "}
-          <span className="rounded bg-muted px-1.5 py-0.5 font-mono">
-            What would BA117 cost on Friday?
-          </span>
-        </p>
+      <div className="max-w-md space-y-4 text-center text-sm text-muted-foreground">
+        <p>Tell us a flight you&apos;d like to insure.</p>
+        <div className="flex flex-col items-center gap-2">
+          {EXAMPLES.map((q) =>
+            onPick ? (
+              <button
+                key={q}
+                type="button"
+                onClick={() => onPick(q)}
+                className="rounded border bg-background px-3 py-1.5 font-mono text-xs text-foreground transition-colors hover:bg-muted"
+              >
+                {q}
+              </button>
+            ) : (
+              <span
+                key={q}
+                className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs"
+              >
+                {q}
+              </span>
+            ),
+          )}
+        </div>
       </div>
     </div>
   );

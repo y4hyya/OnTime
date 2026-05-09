@@ -128,12 +128,12 @@ export default async function AccountPage() {
         </div>
       )}
 
-      <div className="rounded-lg border bg-muted/20 p-4">
-        <div className="text-xs uppercase tracking-wide text-muted-foreground">
-          Account ID
-        </div>
-        <code className="mt-1 block break-all font-mono text-xs">{userId}</code>
-      </div>
+      <details className="rounded-lg border bg-muted/20 p-3 text-xs">
+        <summary className="cursor-pointer select-none text-muted-foreground">
+          Developer info
+        </summary>
+        <code className="mt-2 block break-all font-mono">{userId}</code>
+      </details>
     </div>
   );
 }

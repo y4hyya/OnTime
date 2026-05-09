@@ -17,7 +17,7 @@ export default function Home() {
             payouts the moment your flight slips past 30 minutes — no claim
             forms, no waiting.
           </p>
-          <div className="mt-8">
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Show
               when="signed-out"
               fallback={
@@ -34,7 +34,31 @@ export default function Home() {
                 <Button size="lg">Get a quote</Button>
               </SignInButton>
             </Show>
+            <Button
+              size="lg"
+              variant="outline"
+              nativeButton={false}
+              render={<a href="#how-it-works" />}
+            >
+              See how it works
+            </Button>
           </div>
+        </div>
+      </section>
+
+      <section className="border-b">
+        <div className="mx-auto max-w-2xl px-6 py-16">
+          <h2 className="text-2xl font-semibold tracking-tight">
+            Why this exists
+          </h2>
+          <p className="mt-4 text-muted-foreground">
+            Vienna airport, mid-afternoon, two hours of delay. Sitting in one of
+            those uncomfortable plastic chairs, I realized I&apos;d gladly have
+            paid a couple of dollars to insure even thirty minutes of this — to
+            be in the Starbucks across the gate with a coffee instead. Existing
+            flight insurance only kicks in past three hours or on cancellations.
+            Nobody covers the ordinary Wednesday-afternoon delay. So we did.
+          </p>
         </div>
       </section>
 
@@ -70,10 +94,14 @@ export default function Home() {
           <div className="mt-10">
             <TierTable />
           </div>
+          <p className="mt-4 text-balance text-center text-sm text-muted-foreground">
+            Example: a <span className="font-medium text-foreground">$2 premium</span> pays out{" "}
+            <span className="font-medium text-foreground">$4 / $6 / $12 / $40</span> across the four tiers.
+          </p>
         </div>
       </section>
 
-      <section className="border-b">
+      <section id="how-it-works" className="scroll-mt-20 border-b">
         <div className="mx-auto max-w-5xl px-6 py-16">
           <h2 className="mb-10 text-center text-3xl font-semibold tracking-tight">
             How it works
@@ -89,22 +117,6 @@ export default function Home() {
               We watch the flight. When a tier triggers, your payout lands.
             </Step>
           </ol>
-        </div>
-      </section>
-
-      <section>
-        <div className="mx-auto max-w-2xl px-6 py-16">
-          <h2 className="text-2xl font-semibold tracking-tight">
-            Why we built this
-          </h2>
-          <p className="mt-4 text-muted-foreground">
-            Vienna airport, mid-afternoon, two hours of delay. Sitting in one of
-            those uncomfortable plastic chairs, I realized I&apos;d gladly have
-            paid a couple of dollars to insure even thirty minutes of this — to
-            be in the Starbucks across the gate with a coffee instead. Existing
-            flight insurance only kicks in past three hours or on cancellations.
-            Nobody covers the ordinary Wednesday-afternoon delay. So we did.
-          </p>
         </div>
       </section>
     </>

@@ -143,7 +143,11 @@ export default async function PolicyDetailPage({
         <PolicyChat policyId={policy.id} status={policy.status} />
       )}
 
-      <Button nativeButton={false} render={<Link href="/policies" />}>
+      <Button
+        variant="outline"
+        nativeButton={false}
+        render={<Link href="/policies" />}
+      >
         All policies
       </Button>
     </div>

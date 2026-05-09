@@ -189,7 +189,15 @@ export default function QuotePage() {
   return (
     <div className="flex flex-1 gap-6 overflow-hidden">
       <div className="flex min-h-0 flex-1 flex-col rounded-lg border bg-background">
-        <MessageList messages={messages} />
+        <MessageList messages={messages} onPickExample={sendMessage} />
+        {hasQuote && (
+          <MobileQuoteBar
+            flight={flight}
+            pricing={pricing}
+            onBuy={onBuy}
+            buying={buying}
+          />
+        )}
         {error && (
           <div className="border-t bg-destructive/10 px-4 py-2 text-sm text-destructive">
             {error}
@@ -210,6 +218,39 @@ export default function QuotePage() {
           <TierLadderCard />
         )}
       </aside>
+    </div>
+  );
+}
+
+function MobileQuoteBar({
+  flight,
+  pricing,
+  onBuy,
+  buying,
+}: {
+  flight: Flight;
+  pricing: Pricing;
+  onBuy: () => void;
+  buying: boolean;
+}) {
+  const maxPayout = pricing.payouts[pricing.payouts.length - 1]?.payoutDollars;
+  return (
+    <div className="border-t bg-muted/30 p-3 lg:hidden">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="truncate text-sm font-medium">
+            {flight.iata} · ${pricing.premiumDollars} premium
+          </div>
+          {maxPayout && (
+            <div className="truncate text-xs text-muted-foreground">
+              Up to ${maxPayout} payout
+            </div>
+          )}
+        </div>
+        <Button onClick={onBuy} disabled={buying} size="sm">
+          {buying ? <Loader2 className="size-4 animate-spin" /> : "Buy"}
+        </Button>
+      </div>
     </div>
   );
 }

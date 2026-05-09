@@ -4,6 +4,7 @@ import type {
   GenerateContentResponseUsageMetadata,
 } from "@google/genai";
 import { getGoogleAI, SUPPORT_AGENT_MODEL } from "@/lib/ai/client";
+import { friendlyAgentError } from "@/lib/ai/errors";
 import { SUPPORT_AGENT_SYSTEM_PROMPT } from "@/lib/ai/prompts/support-agent";
 import { db } from "@/lib/db/client";
 import { chatSessions } from "@/lib/db/schema";
@@ -92,10 +93,8 @@ export async function POST(req: Request) {
 
         send({ type: "done" });
       } catch (e) {
-        send({
-          type: "error",
-          message: e instanceof Error ? e.message : String(e),
-        });
+        console.error("[ai] support agent error:", e);
+        send({ type: "error", message: friendlyAgentError(e) });
       } finally {
         controller.close();
       }

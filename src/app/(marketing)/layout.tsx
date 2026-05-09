@@ -35,8 +35,7 @@ export default function MarketingLayout({
       <main className="flex-1">{children}</main>
       <footer className="border-t">
         <div className="mx-auto max-w-5xl px-6 py-6 text-center text-xs text-muted-foreground">
-          OnTime · simulated MVP, not yet a licensed insurance product · T-2h
-          purchase cutoff applies
+          OnTime · demo build · not a licensed insurance product yet
         </div>
       </footer>
     </div>

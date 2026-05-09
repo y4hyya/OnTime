@@ -7,6 +7,7 @@ import type {
   Part,
 } from "@google/genai";
 import { getGoogleAI, QUOTE_AGENT_MODEL } from "@/lib/ai/client";
+import { friendlyAgentError } from "@/lib/ai/errors";
 import { CLAIM_AGENT_SYSTEM_PROMPT } from "@/lib/ai/prompts/claim-agent";
 import {
   createGetPolicyHandler,
@@ -187,10 +188,8 @@ export async function POST(req: Request) {
 
         send({ type: "done" });
       } catch (e) {
-        send({
-          type: "error",
-          message: e instanceof Error ? e.message : String(e),
-        });
+        console.error("[ai] claim agent error:", e);
+        send({ type: "error", message: friendlyAgentError(e) });
       } finally {
         controller.close();
       }
